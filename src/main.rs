@@ -1,25 +1,29 @@
 use std::io::{self, Write};
 
+mod args;
+
+use args::Args;
+
 fn print_prompt() {
     print!("$ ");
     io::stdout().flush().unwrap();
 }
 
-fn read_command() -> String {
-    let mut command = String::new();
-    io::stdin().read_line(&mut command).unwrap();
+fn parse_args() -> Args {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
 
-    command.trim().to_string()
+    Args::new(&input)
 }
 
-fn eval(command: &str) {
-    println!("{}: command not found", command);
+fn eval(args: Args) {
+    println!("{}: command not found", args.command());
 }
 
 fn main() {
     loop {
         print_prompt();
-        let command = read_command();
-        eval(&command);
+        let args = parse_args();
+        eval(args);
     }
 }
