@@ -2,33 +2,65 @@ pub struct Args {
     pub args: Vec<String>,
 }
 
+enum QuoteState {
+    Single,
+    Double,
+    None,
+}
+
 impl Args {
     pub fn new(input: &str) -> Self {
         let mut args = Vec::<String>::new();
 
-        let mut opening_quote = None;
+        let mut state = QuoteState::None;
         let mut curr_arg = String::new();
+        let mut escaped = false;
 
         for character in input.trim().chars() {
-            if character == '\'' || character == '"' {
-                if opening_quote.is_some_and(|c| c == character) {
-                    opening_quote = None;
-                    continue;
-                } else if opening_quote.is_none() {
-                    opening_quote = Some(character);
-                    continue;
+            match state {
+                _ if escaped => {
+                    curr_arg.push(character);
+                    escaped = false;
                 }
-            }
-
-            if character.is_whitespace() && opening_quote.is_none() {
-                let arg = curr_arg.trim();
-                if !arg.is_empty() {
-                    args.push(arg.to_string());
+                QuoteState::Single => {
+                    if character == '\'' {
+                        state = QuoteState::None;
+                    } else {
+                        curr_arg.push(character);
+                    }
                 }
-                curr_arg.clear();
-                opening_quote = None;
-            } else {
-                curr_arg.push(character);
+                QuoteState::Double => match character {
+                    '\\' => {
+                        escaped = true;
+                    }
+                    '"' => {
+                        state = QuoteState::None;
+                    }
+                    _ => {
+                        curr_arg.push(character);
+                    }
+                },
+                QuoteState::None => match character {
+                    '\\' => {
+                        escaped = true;
+                    }
+                    '\'' => {
+                        state = QuoteState::Single;
+                    }
+                    '"' => {
+                        state = QuoteState::Double;
+                    }
+                    character if character.is_whitespace() => {
+                        let arg = curr_arg.trim();
+                        if !arg.is_empty() {
+                            args.push(arg.to_string());
+                        }
+                        curr_arg.clear();
+                    }
+                    _ => {
+                        curr_arg.push(character);
+                    }
+                },
             }
         }
 
