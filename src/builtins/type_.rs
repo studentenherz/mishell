@@ -17,6 +17,9 @@ impl Command for Type {
                 LocatedCommand::Builtin(_) => {
                     println!("{} is a shell builtin", cmd)
                 }
+                LocatedCommand::Executable(path) => {
+                    println!("{} is {}", cmd, path.display());
+                }
                 LocatedCommand::Unrecognized => {
                     println!("{}: not found", cmd);
                 }

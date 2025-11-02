@@ -6,6 +6,9 @@ pub fn eval(args: Args) {
         LocatedCommand::Builtin(cmd) => {
             cmd.eval(args);
         }
+        LocatedCommand::Executable(_) => {
+            unimplemented!()
+        }
         LocatedCommand::Unrecognized => {
             println!("{}: command not found", args.command());
         }
