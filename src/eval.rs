@@ -1,14 +1,12 @@
 use crate::args::Args;
-use crate::builtins::get_builtin;
+use crate::locate::{locate, LocatedCommand};
 
 pub fn eval(args: Args) {
-    let command = get_builtin(args.command());
-
-    match command {
-        Some(cmd) => {
+    match locate(args.command()) {
+        LocatedCommand::Builtin(cmd) => {
             cmd.eval(args);
         }
-        None => {
+        LocatedCommand::Unrecognized => {
             println!("{}: command not found", args.command());
         }
     }

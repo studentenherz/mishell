@@ -4,6 +4,7 @@ mod args;
 mod builtins;
 mod commands;
 mod eval;
+mod locate;
 
 use args::Args;
 use eval::eval;
