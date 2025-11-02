@@ -18,10 +18,6 @@ impl Args {
 
         for character in input.trim().chars() {
             match state {
-                _ if escaped => {
-                    curr_arg.push(character);
-                    escaped = false;
-                }
                 QuoteState::Single => {
                     if character == '\'' {
                         state = QuoteState::None;
@@ -30,9 +26,16 @@ impl Args {
                     }
                 }
                 QuoteState::Double => match character {
-                    // '\\' => {
-                    //     escaped = true;
-                    // }
+                    _ if escaped => {
+                        if !['"', '\\', '$', '`'].contains(&character) {
+                            curr_arg.push('\\');
+                        }
+                        curr_arg.push(character);
+                        escaped = false;
+                    }
+                    '\\' => {
+                        escaped = true;
+                    }
                     '"' => {
                         state = QuoteState::None;
                     }
@@ -41,6 +44,10 @@ impl Args {
                     }
                 },
                 QuoteState::None => match character {
+                    _ if escaped => {
+                        curr_arg.push(character);
+                        escaped = false;
+                    }
                     '\\' => {
                         escaped = true;
                     }
