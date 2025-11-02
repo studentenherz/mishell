@@ -30,9 +30,9 @@ impl Args {
                     }
                 }
                 QuoteState::Double => match character {
-                    '\\' => {
-                        escaped = true;
-                    }
+                    // '\\' => {
+                    //     escaped = true;
+                    // }
                     '"' => {
                         state = QuoteState::None;
                     }
