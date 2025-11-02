@@ -8,8 +8,8 @@ pub fn eval(args: Args) {
         LocatedCommand::Builtin(cmd) => {
             cmd.eval(args);
         }
-        LocatedCommand::Executable(path) => {
-            match process::Command::new(path.as_os_str())
+        LocatedCommand::Executable(_) => {
+            match process::Command::new(args.command())
                 .args(&args.args[1..])
                 .spawn()
             {
