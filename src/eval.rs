@@ -1,6 +1,5 @@
 use crate::args::Args;
 use crate::builtins::get_builtin;
-use crate::commands::Command;
 
 pub fn eval(args: Args) {
     let command = get_builtin(args.command());
