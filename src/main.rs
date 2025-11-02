@@ -1,8 +1,12 @@
 use std::io::{self, Write};
 
 mod args;
+mod builtins;
+mod commands;
+mod eval;
 
 use args::Args;
+use eval::eval;
 
 fn print_prompt() {
     print!("$ ");
@@ -14,10 +18,6 @@ fn parse_args() -> Args {
     io::stdin().read_line(&mut input).unwrap();
 
     Args::new(&input)
-}
-
-fn eval(args: Args) {
-    println!("{}: command not found", args.command());
 }
 
 fn main() {
