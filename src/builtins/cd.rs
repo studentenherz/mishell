@@ -26,7 +26,10 @@ impl Command for Cd {
             }
         }
 
-        println!("cd: {}: No such file or directory", arg1);
+        let mut stdout = args.stdout();
+        let output = format!("cd: {}: No such file or directory\n", arg1);
+        stdout.write_all(output.as_bytes()).unwrap();
+        stdout.flush().unwrap();
 
         CommandReturnType {}
     }
