@@ -7,7 +7,7 @@ use crate::builtins::get_builtin;
 use crate::commands::*;
 
 pub enum LocatedCommand {
-    Builtin(Box<dyn Command>),
+    Builtin(Box<dyn Builtin>),
     Executable(PathBuf),
     Unrecognized,
 }

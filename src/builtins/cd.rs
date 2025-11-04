@@ -12,7 +12,7 @@ impl Cd {
     }
 }
 
-impl Command for Cd {
+impl Builtin for Cd {
     fn eval(&self, args: Args) -> CommandReturnType {
         let arg1 = args.args.iter().nth(1).map_or("~", |x| x.as_str());
         let home_dir = env::home_dir().map_or("~".to_string(), |x| x.display().to_string());

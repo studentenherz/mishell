@@ -10,7 +10,7 @@ impl Type {
     }
 }
 
-impl Command for Type {
+impl Builtin for Type {
     fn eval(&self, args: Args) -> CommandReturnType {
         if let Some(cmd) = args.args.iter().nth(1) {
             let output = match locate(cmd) {

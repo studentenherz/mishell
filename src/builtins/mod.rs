@@ -1,4 +1,4 @@
-use crate::commands::Command;
+use crate::commands::Builtin;
 
 mod cd;
 mod echo;
@@ -12,7 +12,7 @@ use exit::Exit;
 use pwd::Pwd;
 use type_::Type;
 
-pub fn get_builtin(cmd: &str) -> Option<Box<dyn Command>> {
+pub fn get_builtin(cmd: &str) -> Option<Box<dyn Builtin>> {
     match cmd {
         "cd" => Some(Box::new(Cd::new())),
         "exit" => Some(Box::new(Exit::new())),

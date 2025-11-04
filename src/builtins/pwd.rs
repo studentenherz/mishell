@@ -11,7 +11,7 @@ impl Pwd {
     }
 }
 
-impl Command for Pwd {
+impl Builtin for Pwd {
     fn eval(&self, args: Args) -> CommandReturnType {
         if let Ok(cwd) = env::current_dir() {
             let mut stdout = args.stdout();

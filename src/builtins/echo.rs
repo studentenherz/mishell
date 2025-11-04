@@ -10,7 +10,7 @@ impl Echo {
     }
 }
 
-impl Command for Echo {
+impl Builtin for Echo {
     fn eval(&self, args: Args) -> CommandReturnType {
         let mut stdout = args.stdout();
         let output = format!("{}\n", args.args[1..].join(" "));

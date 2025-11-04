@@ -2,6 +2,6 @@ use crate::args::Args;
 
 pub struct CommandReturnType;
 
-pub trait Command {
+pub trait Builtin {
     fn eval(&self, args: Args) -> CommandReturnType;
 }

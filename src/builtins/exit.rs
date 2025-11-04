@@ -11,7 +11,7 @@ impl Exit {
     }
 }
 
-impl Command for Exit {
+impl Builtin for Exit {
     fn eval(&self, args: Args) -> CommandReturnType {
         if let Some(exit_code) = args.args.iter().nth(1) {
             if let Ok(exit_code) = exit_code.parse::<i32>() {
