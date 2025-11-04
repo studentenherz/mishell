@@ -38,7 +38,7 @@ pub fn eval(args: Args) {
             }
         }
         LocatedCommand::Unrecognized => {
-            println!("{}: command not found", args.command());
+            eprintln!("{}: command not found", args.command());
         }
     }
 }

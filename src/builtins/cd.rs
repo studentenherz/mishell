@@ -26,10 +26,10 @@ impl Builtin for Cd {
             }
         }
 
-        let mut stdout = args.stdout();
+        let mut stderr = args.stderr();
         let output = format!("cd: {}: No such file or directory\n", arg1);
-        stdout.write_all(output.as_bytes()).unwrap();
-        stdout.flush().unwrap();
+        stderr.write_all(output.as_bytes()).unwrap();
+        stderr.flush().unwrap();
 
         CommandReturnType {}
     }
