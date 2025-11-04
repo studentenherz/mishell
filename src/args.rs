@@ -1,5 +1,19 @@
+#[derive(Clone)]
+pub struct OutRedirectOptions {
+    pub filename: String,
+    pub append: bool,
+}
+
+#[derive(Clone)]
+pub struct InputRedirectOptions {
+    pub filename: String,
+}
+
 pub struct Args {
     pub args: Vec<String>,
+    redirect_stdin: Option<InputRedirectOptions>,
+    redirect_stdout: Option<OutRedirectOptions>,
+    redirect_stderr: Option<OutRedirectOptions>,
 }
 
 enum QuoteState {
@@ -9,7 +23,7 @@ enum QuoteState {
 }
 
 impl Args {
-    pub fn new(input: &str) -> Self {
+    fn parse_args(input: &str) -> Vec<String> {
         let mut args = Vec::<String>::new();
 
         let mut state = QuoteState::None;
@@ -72,11 +86,124 @@ impl Args {
         }
 
         args.push(curr_arg);
+        args
+    }
 
-        Self { args }
+    pub fn new(input: &str) -> Self {
+        let raw_args = Self::parse_args(input);
+        let mut args = Vec::<String>::new();
+        let mut redirect_stdin = None;
+        let mut redirect_stdout = None;
+        let mut redirect_stderr = None;
+
+        let mut iter = raw_args.into_iter();
+
+        while let Some(arg) = iter.next() {
+            match arg.as_str() {
+                "1>" | ">" => {
+                    redirect_stdout = Some(OutRedirectOptions {
+                        filename: iter.next().expect("shell: parse error"),
+                        append: false,
+                    })
+                }
+                "1>>" | ">>" => {
+                    redirect_stdout = Some(OutRedirectOptions {
+                        filename: iter.next().expect("shell: parse error"),
+                        append: true,
+                    })
+                }
+                "2>" => {
+                    redirect_stderr = Some(OutRedirectOptions {
+                        filename: iter.next().expect("shell: parse error"),
+                        append: false,
+                    })
+                }
+                "2>>" => {
+                    redirect_stderr = Some(OutRedirectOptions {
+                        filename: iter.next().expect("shell: parse error"),
+                        append: true,
+                    })
+                }
+                "<" => {
+                    redirect_stdin = Some(InputRedirectOptions {
+                        filename: iter.next().expect("shell: parse error"),
+                    })
+                }
+
+                _ => {
+                    args.push(arg);
+                }
+            }
+        }
+
+        Self {
+            args,
+            redirect_stdout,
+            redirect_stderr,
+            redirect_stdin,
+        }
     }
 
     pub fn command(&self) -> &str {
         &self.args[0]
+    }
+
+    pub fn get_stdin_file(&self) -> Option<std::fs::File> {
+        self.redirect_stdin
+            .clone()
+            .map(|InputRedirectOptions { filename }| {
+                std::fs::File::options()
+                    .create(true)
+                    .read(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    pub fn get_stdout_file(&self) -> Option<std::fs::File> {
+        self.redirect_stdout
+            .clone()
+            .map(|OutRedirectOptions { filename, append }| {
+                std::fs::File::options()
+                    .append(append)
+                    .create(true)
+                    .write(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    pub fn get_stderr_file(&self) -> Option<std::fs::File> {
+        self.redirect_stderr
+            .clone()
+            .map(|OutRedirectOptions { filename, append }| {
+                std::fs::File::options()
+                    .append(append)
+                    .create(true)
+                    .write(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    pub fn stdin(&self) -> Box<dyn std::io::Read> {
+        match self.get_stdin_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stdin()),
+        }
+    }
+
+    pub fn stdout(&self) -> Box<dyn std::io::Write> {
+        match self.get_stdout_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stdout()),
+        }
+    }
+
+    pub fn stderr(&self) -> Box<dyn std::io::Write> {
+        match self.get_stderr_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stderr()),
+        }
     }
 }

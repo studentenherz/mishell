@@ -1,5 +1,6 @@
 use crate::args::Args;
 use crate::commands::*;
+use std::io::Write;
 
 pub struct Echo;
 
@@ -11,7 +12,11 @@ impl Echo {
 
 impl Command for Echo {
     fn eval(&self, args: Args) -> CommandReturnType {
-        println!("{}", args.args[1..].join(" "));
+        let mut stdout = args.stdout();
+        let output = format!("{}\n", args.args[1..].join(" "));
+
+        stdout.write_all(&output.as_bytes()).unwrap();
+        stdout.flush().unwrap();
 
         CommandReturnType {}
     }
