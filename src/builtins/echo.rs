@@ -12,7 +12,7 @@ impl Echo {
 
 impl Builtin for Echo {
     fn eval(&self, args: Args) -> CommandReturnType {
-        let mut stdout = args.stdout();
+        let (_stdin, mut stdout, _stderr) = args.stdio();
         let output = format!("{}\n", args.args[1..].join(" "));
 
         stdout.write_all(&output.as_bytes()).unwrap();

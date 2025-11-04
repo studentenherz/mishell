@@ -26,7 +26,7 @@ impl Builtin for Cd {
             }
         }
 
-        let mut stderr = args.stderr();
+        let (_stdin, _stdout, mut stderr) = args.stdio();
         let output = format!("cd: {}: No such file or directory\n", arg1);
         stderr.write_all(output.as_bytes()).unwrap();
         stderr.flush().unwrap();

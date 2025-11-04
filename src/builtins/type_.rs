@@ -24,7 +24,7 @@ impl Builtin for Type {
                     format!("{}: not found\n", cmd)
                 }
             };
-            let mut stdout = args.stdout();
+            let (_stdin, mut stdout, _stderr) = args.stdio();
             stdout.write_all(output.as_bytes()).unwrap();
             stdout.flush().unwrap();
         }

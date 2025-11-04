@@ -14,7 +14,7 @@ impl Pwd {
 impl Builtin for Pwd {
     fn eval(&self, args: Args) -> CommandReturnType {
         if let Ok(cwd) = env::current_dir() {
-            let mut stdout = args.stdout();
+            let (_stdin, mut stdout, _stderr) = args.stdio();
             let output = format!("{}\n", cwd.display());
             stdout.write_all(output.as_bytes()).unwrap();
             stdout.flush().unwrap();

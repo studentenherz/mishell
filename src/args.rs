@@ -186,24 +186,34 @@ impl Args {
             })
     }
 
-    pub fn stdin(&self) -> Box<dyn std::io::Read> {
+    fn stdin(&self) -> Box<dyn std::io::Read> {
         match self.get_stdin_file() {
             Some(file) => Box::new(file),
             None => Box::new(std::io::stdin()),
         }
     }
 
-    pub fn stdout(&self) -> Box<dyn std::io::Write> {
+    fn stdout(&self) -> Box<dyn std::io::Write> {
         match self.get_stdout_file() {
             Some(file) => Box::new(file),
             None => Box::new(std::io::stdout()),
         }
     }
 
-    pub fn stderr(&self) -> Box<dyn std::io::Write> {
+    fn stderr(&self) -> Box<dyn std::io::Write> {
         match self.get_stderr_file() {
             Some(file) => Box::new(file),
             None => Box::new(std::io::stderr()),
         }
+    }
+
+    pub fn stdio(
+        &self,
+    ) -> (
+        Box<dyn std::io::Read>,
+        Box<dyn std::io::Write>,
+        Box<dyn std::io::Write>,
+    ) {
+        (self.stdin(), self.stdout(), self.stderr())
     }
 }
