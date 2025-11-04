@@ -13,10 +13,10 @@ pub fn eval(args: Args) {
             if let Some(file) = args.get_stdin_file() {
                 command.stdin(file);
             }
-            if let Some(file) = args.get_stderr_file() {
-                command.stderr(file);
-            }
             if let Some(file) = args.get_stdout_file() {
+                command.stdout(file);
+            }
+            if let Some(file) = args.get_stderr_file() {
                 command.stderr(file);
             }
             command.args(&args.args[1..]);
