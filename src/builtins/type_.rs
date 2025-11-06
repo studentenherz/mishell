@@ -1,4 +1,4 @@
-use crate::args::Args;
+use crate::args::CommandArgs;
 use crate::commands::*;
 use crate::locate::{locate, LocatedCommand};
 
@@ -11,7 +11,7 @@ impl Type {
 }
 
 impl Builtin for Type {
-    fn eval(&self, args: Args) -> CommandReturnType {
+    fn eval(&self, args: CommandArgs) -> CommandReturnType {
         if let Some(cmd) = args.args.iter().nth(1) {
             let output = match locate(cmd) {
                 LocatedCommand::Builtin(_) => {

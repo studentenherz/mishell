@@ -9,11 +9,93 @@ pub struct InputRedirectOptions {
     pub filename: String,
 }
 
-pub struct Args {
+pub struct CommandArgs {
     pub args: Vec<String>,
     redirect_stdin: Option<InputRedirectOptions>,
     redirect_stdout: Option<OutRedirectOptions>,
     redirect_stderr: Option<OutRedirectOptions>,
+}
+
+impl CommandArgs {
+    pub fn command(&self) -> &str {
+        &self.args[0]
+    }
+
+    pub fn get_stdin_file(&self) -> Option<std::fs::File> {
+        self.redirect_stdin
+            .clone()
+            .map(|InputRedirectOptions { filename }| {
+                std::fs::File::options()
+                    .create(true)
+                    .read(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    pub fn get_stdout_file(&self) -> Option<std::fs::File> {
+        self.redirect_stdout
+            .clone()
+            .map(|OutRedirectOptions { filename, append }| {
+                std::fs::File::options()
+                    .append(append)
+                    .create(true)
+                    .write(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    pub fn get_stderr_file(&self) -> Option<std::fs::File> {
+        self.redirect_stderr
+            .clone()
+            .map(|OutRedirectOptions { filename, append }| {
+                std::fs::File::options()
+                    .append(append)
+                    .create(true)
+                    .write(true)
+                    .open(filename)
+                    .expect("shell: couldn't create file")
+            })
+    }
+
+    fn stdin(&self) -> Box<dyn std::io::Read> {
+        match self.get_stdin_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stdin()),
+        }
+    }
+
+    fn stdout(&self) -> Box<dyn std::io::Write> {
+        match self.get_stdout_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stdout()),
+        }
+    }
+
+    fn stderr(&self) -> Box<dyn std::io::Write> {
+        match self.get_stderr_file() {
+            Some(file) => Box::new(file),
+            None => Box::new(std::io::stderr()),
+        }
+    }
+
+    pub fn stdio(
+        &self,
+    ) -> (
+        Box<dyn std::io::Read>,
+        Box<dyn std::io::Write>,
+        Box<dyn std::io::Write>,
+    ) {
+        (self.stdin(), self.stdout(), self.stderr())
+    }
+}
+
+pub struct Args {
+    // This could probable be better with a more complex
+    // structure like a DAG, but for now, only piping will
+    // be implemented and it would be overkill.
+    pub commands: Vec<CommandArgs>,
 }
 
 enum QuoteState {
@@ -90,7 +172,10 @@ impl Args {
     }
 
     pub fn new(input: &str) -> Self {
-        let raw_args = Self::parse_args(input);
+        let mut raw_args = Self::parse_args(input);
+        raw_args.push("|".to_string());
+
+        let mut commands = Vec::<CommandArgs>::new();
         let mut args = Vec::<String>::new();
         let mut redirect_stdin = None;
         let mut redirect_stdout = None;
@@ -129,91 +214,25 @@ impl Args {
                         filename: iter.next().expect("shell: parse error"),
                     })
                 }
+                "|" => {
+                    commands.push(CommandArgs {
+                        args: args.clone(),
+                        redirect_stdin: redirect_stdin.clone(),
+                        redirect_stdout: redirect_stdout.clone(),
+                        redirect_stderr: redirect_stderr.clone(),
+                    });
 
+                    args.clear();
+                    redirect_stdin = None;
+                    redirect_stdout = None;
+                    redirect_stderr = None;
+                }
                 _ => {
                     args.push(arg);
                 }
             }
         }
 
-        Self {
-            args,
-            redirect_stdout,
-            redirect_stderr,
-            redirect_stdin,
-        }
-    }
-
-    pub fn command(&self) -> &str {
-        &self.args[0]
-    }
-
-    pub fn get_stdin_file(&self) -> Option<std::fs::File> {
-        self.redirect_stdin
-            .clone()
-            .map(|InputRedirectOptions { filename }| {
-                std::fs::File::options()
-                    .create(true)
-                    .read(true)
-                    .open(filename)
-                    .expect("shell: couldn't create file")
-            })
-    }
-
-    pub fn get_stdout_file(&self) -> Option<std::fs::File> {
-        self.redirect_stdout
-            .clone()
-            .map(|OutRedirectOptions { filename, append }| {
-                std::fs::File::options()
-                    .append(append)
-                    .create(true)
-                    .write(true)
-                    .open(filename)
-                    .expect("shell: couldn't create file")
-            })
-    }
-
-    pub fn get_stderr_file(&self) -> Option<std::fs::File> {
-        self.redirect_stderr
-            .clone()
-            .map(|OutRedirectOptions { filename, append }| {
-                std::fs::File::options()
-                    .append(append)
-                    .create(true)
-                    .write(true)
-                    .open(filename)
-                    .expect("shell: couldn't create file")
-            })
-    }
-
-    fn stdin(&self) -> Box<dyn std::io::Read> {
-        match self.get_stdin_file() {
-            Some(file) => Box::new(file),
-            None => Box::new(std::io::stdin()),
-        }
-    }
-
-    fn stdout(&self) -> Box<dyn std::io::Write> {
-        match self.get_stdout_file() {
-            Some(file) => Box::new(file),
-            None => Box::new(std::io::stdout()),
-        }
-    }
-
-    fn stderr(&self) -> Box<dyn std::io::Write> {
-        match self.get_stderr_file() {
-            Some(file) => Box::new(file),
-            None => Box::new(std::io::stderr()),
-        }
-    }
-
-    pub fn stdio(
-        &self,
-    ) -> (
-        Box<dyn std::io::Read>,
-        Box<dyn std::io::Write>,
-        Box<dyn std::io::Write>,
-    ) {
-        (self.stdin(), self.stdout(), self.stderr())
+        Self { commands }
     }
 }

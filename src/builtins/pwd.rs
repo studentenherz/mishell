@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::args::Args;
+use crate::args::CommandArgs;
 use crate::commands::*;
 
 pub struct Pwd;
@@ -12,7 +12,7 @@ impl Pwd {
 }
 
 impl Builtin for Pwd {
-    fn eval(&self, args: Args) -> CommandReturnType {
+    fn eval(&self, args: CommandArgs) -> CommandReturnType {
         if let Ok(cwd) = env::current_dir() {
             let (_stdin, mut stdout, _stderr) = args.stdio();
             let output = format!("{}\n", cwd.display());

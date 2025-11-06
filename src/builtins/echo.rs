@@ -1,6 +1,7 @@
-use crate::args::Args;
-use crate::commands::*;
 use std::io::Write;
+
+use crate::args::CommandArgs;
+use crate::commands::*;
 
 pub struct Echo;
 
@@ -11,7 +12,7 @@ impl Echo {
 }
 
 impl Builtin for Echo {
-    fn eval(&self, args: Args) -> CommandReturnType {
+    fn eval(&self, args: CommandArgs) -> CommandReturnType {
         let (_stdin, mut stdout, _stderr) = args.stdio();
         let output = format!("{}\n", args.args[1..].join(" "));
 

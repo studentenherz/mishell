@@ -101,9 +101,6 @@ impl Shell {
 
                     let args = Args::new(&line);
 
-                    if args.command() == "exit" {
-                        break;
-                    }
                     eval(args);
                 }
                 Err(ReadlineError::Interrupted) => {

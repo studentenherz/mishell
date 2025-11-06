@@ -1,7 +1,7 @@
-use crate::args::Args;
+use crate::args::CommandArgs;
 
 pub struct CommandReturnType;
 
 pub trait Builtin {
-    fn eval(&self, args: Args) -> CommandReturnType;
+    fn eval(&self, args: CommandArgs) -> CommandReturnType;
 }
