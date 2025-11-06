@@ -52,23 +52,11 @@ impl Completer for ShellHelper {
             .into_iter()
             .map(|name| Pair {
                 display: name.clone(),
-                replacement: name,
+                replacement: format!("{} ", name),
             })
             .collect();
 
         Ok((command_start, matches))
-    }
-
-    fn update(
-        &self,
-        line: &mut rustyline::line_buffer::LineBuffer,
-        start: usize,
-        elected: &str,
-        cl: &mut rustyline::Changeset,
-    ) {
-        let end = line.pos();
-        let with_space = format!("{} ", elected);
-        line.replace(start..end, &with_space, cl);
     }
 }
 
