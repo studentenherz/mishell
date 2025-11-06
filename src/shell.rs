@@ -58,6 +58,18 @@ impl Completer for ShellHelper {
 
         Ok((command_start, matches))
     }
+
+    fn update(
+        &self,
+        line: &mut rustyline::line_buffer::LineBuffer,
+        start: usize,
+        elected: &str,
+        cl: &mut rustyline::Changeset,
+    ) {
+        let end = line.pos();
+        let with_space = format!("{} ", elected);
+        line.replace(start..end, &with_space, cl);
+    }
 }
 
 impl Hinter for ShellHelper {
