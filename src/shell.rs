@@ -5,7 +5,7 @@ use rustyline::{
     hint::Hinter,
     history::FileHistory,
     validate::Validator,
-    Context, Editor, Helper, Result,
+    CompletionType, Config, Context, Editor, Helper, Result,
 };
 use std::io;
 
@@ -87,7 +87,12 @@ pub struct Shell {
 
 impl Shell {
     pub fn new() -> Self {
-        let mut rl = Editor::<ShellHelper, FileHistory>::new().unwrap();
+        let config = Config::builder()
+            .completion_type(CompletionType::List)
+            .completion_prompt_limit(50)
+            .build();
+
+        let mut rl = Editor::with_config(config).unwrap();
         rl.set_helper(Some(ShellHelper::new()));
 
         Self { rl }
