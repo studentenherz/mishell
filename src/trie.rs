@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 struct TrieNode {
     pub end_of_word: bool,
-    children: HashMap<char, TrieNode>,
+    children: BTreeMap<char, TrieNode>,
 }
 
 impl TrieNode {
