@@ -12,6 +12,28 @@ pub enum LocatedCommand {
     Unrecognized,
 }
 
+pub fn get_executables_names() -> Vec<String> {
+    let mut executables = vec![];
+
+    if let Some(path) = env::var_os("PATH") {
+        for dir in env::split_paths(&path) {
+            if let Ok(read_dir) = dir.read_dir() {
+                for dir_entry in read_dir {
+                    if let Ok(file) = dir_entry {
+                        if let Ok(metadata) = file.metadata() {
+                            if metadata.is_file() && (metadata.permissions().mode() & 0o111) != 0 {
+                                executables.push(file.file_name().into_string().unwrap());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    executables
+}
+
 pub fn locate(cmd: &str) -> LocatedCommand {
     if let Some(command) = get_builtin(cmd) {
         return LocatedCommand::Builtin(command);

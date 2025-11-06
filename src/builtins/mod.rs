@@ -12,6 +12,8 @@ use exit::Exit;
 use pwd::Pwd;
 use type_::Type;
 
+pub const BUILTIN_COMANDS: [&str; 5] = ["cd", "exit", "echo", "type", "pwd"];
+
 pub fn get_builtin(cmd: &str) -> Option<Box<dyn Builtin>> {
     match cmd {
         "cd" => Some(Box::new(Cd::new())),
