@@ -103,11 +103,7 @@ impl Shell {
 
                     eval(args);
                 }
-                Err(ReadlineError::Interrupted) => {
-                    println!("^C");
-                }
                 Err(ReadlineError::Eof) => {
-                    println!("^D");
                     break;
                 }
                 Err(err) => {
