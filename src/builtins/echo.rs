@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{Read, Write};
 
 use crate::args::CommandArgs;
 use crate::commands::*;
@@ -12,8 +12,13 @@ impl Echo {
 }
 
 impl Builtin for Echo {
-    fn eval(&self, args: CommandArgs) -> CommandReturnType {
-        let (_stdin, mut stdout, _stderr) = args.stdio();
+    fn eval(
+        &self,
+        args: CommandArgs,
+        _stdin: Box<dyn Read>,
+        mut stdout: Box<dyn Write>,
+        _stderr: Box<dyn Write>,
+    ) -> CommandReturnType {
         let output = format!("{}\n", args.args[1..].join(" "));
 
         stdout.write_all(&output.as_bytes()).unwrap();

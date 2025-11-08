@@ -13,7 +13,13 @@ impl Cd {
 }
 
 impl Builtin for Cd {
-    fn eval(&self, args: CommandArgs) -> CommandReturnType {
+    fn eval(
+        &self,
+        args: CommandArgs,
+        _stdin: Box<dyn Read>,
+        _stdout: Box<dyn Write>,
+        mut stderr: Box<dyn Write>,
+    ) -> CommandReturnType {
         let arg1 = args.args.iter().nth(1).map_or("~", |x| x.as_str());
         let home_dir = env::home_dir().map_or("~".to_string(), |x| x.display().to_string());
 
@@ -26,7 +32,6 @@ impl Builtin for Cd {
             }
         }
 
-        let (_stdin, _stdout, mut stderr) = args.stdio();
         let output = format!("cd: {}: No such file or directory\n", arg1);
         stderr.write_all(output.as_bytes()).unwrap();
         stderr.flush().unwrap();

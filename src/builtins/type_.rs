@@ -11,7 +11,13 @@ impl Type {
 }
 
 impl Builtin for Type {
-    fn eval(&self, args: CommandArgs) -> CommandReturnType {
+    fn eval(
+        &self,
+        args: CommandArgs,
+        _stdin: Box<dyn Read>,
+        mut stdout: Box<dyn Write>,
+        _stderr: Box<dyn Write>,
+    ) -> CommandReturnType {
         if let Some(cmd) = args.args.iter().nth(1) {
             let output = match locate(cmd) {
                 LocatedCommand::Builtin(_) => {
@@ -24,7 +30,6 @@ impl Builtin for Type {
                     format!("{}: not found\n", cmd)
                 }
             };
-            let (_stdin, mut stdout, _stderr) = args.stdio();
             stdout.write_all(output.as_bytes()).unwrap();
             stdout.flush().unwrap();
         }
