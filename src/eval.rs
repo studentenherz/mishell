@@ -129,6 +129,7 @@ impl PrevPipedStdout {
 
 pub fn eval(args: Args) {
     let mut prev_stdout = PrevPipedStdout::None;
+    let mut handles = vec![];
 
     for command_args in args.commands {
         let curr_stdin = Stdin::new(&command_args.stdin);
@@ -197,14 +198,7 @@ pub fn eval(args: Args) {
                             prev_stdout = PrevPipedStdout::None;
                         }
 
-                        match child.wait() {
-                            Ok(_exit_status) => {
-                                // Handle exit status
-                            }
-                            Err(err) => {
-                                eprintln!("{}", err)
-                            }
-                        }
+                        handles.push(child);
                     }
                     Err(err) => {
                         eprintln!("{}", err);
@@ -216,5 +210,9 @@ pub fn eval(args: Args) {
                 eprintln!("{}: command not found", command_args.command());
             }
         }
+    }
+
+    for mut handle in handles.into_iter() {
+        let _ = handle.wait();
     }
 }
