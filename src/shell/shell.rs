@@ -101,7 +101,9 @@ impl Shell {
 
                     let args = Args::new(&line);
 
-                    eval(args);
+                    if let Err(err) = eval(args) {
+                        eprintln!("mishell: {}", err.message);
+                    }
                 }
                 Err(ReadlineError::Eof) => {
                     break;

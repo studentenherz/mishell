@@ -4,6 +4,7 @@ use std::process::{self, ChildStdout, Stdio};
 
 use crate::args::{Args, StdioConfig};
 use crate::locate::{locate, LocatedCommand};
+use crate::shell::ShellError;
 
 enum Stdin {
     File(File),
@@ -11,16 +12,13 @@ enum Stdin {
 }
 
 impl Stdin {
-    pub fn new(stdio_config: &StdioConfig) -> Self {
-        match stdio_config {
-            StdioConfig::File { path, append: _ } => Self::File(
-                fs::OpenOptions::new()
-                    .read(true)
-                    .open(path)
-                    .expect("Could't open file"),
-            ),
+    pub fn new(stdio_config: &StdioConfig) -> io::Result<Self> {
+        Ok(match stdio_config {
+            StdioConfig::File { path, append: _ } => {
+                Self::File(fs::OpenOptions::new().read(true).open(path)?)
+            }
             _ => Self::Std(io::stdin()),
-        }
+        })
     }
 
     fn take(self) -> Box<dyn Read> {
@@ -50,19 +48,18 @@ impl From<Stdout> for Stdio {
 }
 
 impl Stdout {
-    pub fn new(stdio_config: &StdioConfig, builtin: bool) -> Self {
-        match stdio_config {
+    pub fn new(stdio_config: &StdioConfig, builtin: bool) -> io::Result<Self> {
+        Ok(match stdio_config {
             StdioConfig::File { path, append } => Self::File(
                 fs::OpenOptions::new()
                     .write(true)
                     .append(*append)
-                    .open(path)
-                    .expect("Could't open file"),
+                    .open(path)?,
             ),
             StdioConfig::Std => Self::Std(io::stdout()),
             StdioConfig::Piped if builtin => Self::PipedBuiltin(io::pipe().unwrap()),
             _ => Self::PipedExternal,
-        }
+        })
     }
 
     fn unwrap(self) -> Box<dyn Write> {
@@ -90,17 +87,16 @@ impl From<Stderr> for Stdio {
 }
 
 impl Stderr {
-    pub fn new(stdio_config: &StdioConfig) -> Self {
-        match stdio_config {
+    pub fn new(stdio_config: &StdioConfig) -> io::Result<Self> {
+        Ok(match stdio_config {
             StdioConfig::File { path, append } => Self::File(
                 fs::OpenOptions::new()
                     .write(true)
                     .append(*append)
-                    .open(path)
-                    .expect("Could't open file"),
+                    .open(path)?,
             ),
             _ => Self::Std(io::stderr()),
-        }
+        })
     }
 
     fn unwrap(self) -> Box<dyn Write> {
@@ -127,17 +123,17 @@ impl PrevPipedStdout {
     }
 }
 
-pub fn eval(args: Args) {
+pub fn eval(args: Args) -> Result<(), ShellError> {
     let mut prev_stdout = PrevPipedStdout::None;
     let mut handles = vec![];
 
     for command_args in args.commands {
-        let curr_stdin = Stdin::new(&command_args.stdin);
-        let curr_stderr = Stderr::new(&command_args.stderr);
+        let curr_stdin = Stdin::new(&command_args.stdin)?;
+        let curr_stderr = Stderr::new(&command_args.stderr)?;
 
         match locate(command_args.command()) {
             LocatedCommand::Builtin(cmd) => {
-                let curr_stdout = Stdout::new(&command_args.stdout, true);
+                let curr_stdout = Stdout::new(&command_args.stdout, true)?;
                 let this_stdin: Box<dyn Read> = match curr_stdin {
                     Stdin::Std(_)
                         if matches!(
@@ -175,7 +171,7 @@ pub fn eval(args: Args) {
             }
             LocatedCommand::Executable(_) => {
                 let mut command = process::Command::new(command_args.command());
-                let curr_stdout = Stdout::new(&command_args.stdout, false);
+                let curr_stdout = Stdout::new(&command_args.stdout, false)?;
                 let is_piped = matches!(curr_stdout, Stdout::PipedExternal);
                 match prev_stdout {
                     PrevPipedStdout::External(stdout) => {
@@ -215,4 +211,6 @@ pub fn eval(args: Args) {
     for mut handle in handles.into_iter() {
         let _ = handle.wait();
     }
+
+    Ok(())
 }
