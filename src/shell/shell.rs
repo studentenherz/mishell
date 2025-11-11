@@ -105,6 +105,9 @@ impl Shell {
                         eprintln!("mishell: {}", err.message);
                     }
                 }
+                Err(ReadlineError::Interrupted) => {
+                    continue;
+                }
                 Err(ReadlineError::Eof) => {
                     break;
                 }
