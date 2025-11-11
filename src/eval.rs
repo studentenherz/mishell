@@ -52,8 +52,10 @@ impl Stdout {
         Ok(match stdio_config {
             StdioConfig::File { path, append } => Self::File(
                 fs::OpenOptions::new()
-                    .write(true)
                     .append(*append)
+                    .truncate(!*append)
+                    .create(true)
+                    .write(true)
                     .open(path)?,
             ),
             StdioConfig::Std => Self::Std(io::stdout()),
@@ -91,8 +93,10 @@ impl Stderr {
         Ok(match stdio_config {
             StdioConfig::File { path, append } => Self::File(
                 fs::OpenOptions::new()
-                    .write(true)
                     .append(*append)
+                    .truncate(!*append)
+                    .create(true)
+                    .write(true)
                     .open(path)?,
             ),
             _ => Self::Std(io::stderr()),
