@@ -29,8 +29,6 @@ impl History {
         for line in history {
             file.write_all(format!("{}\n", line).as_bytes())?;
         }
-
-        file.write_all(b"\n")?;
         file.flush()?;
 
         Ok(())
