@@ -3,6 +3,7 @@ use std::path::Path;
 
 use crate::args::CommandArgs;
 use crate::commands::*;
+use crate::shell::Shell;
 
 pub struct Cd;
 
@@ -15,6 +16,7 @@ impl Cd {
 impl Builtin for Cd {
     fn eval(
         &self,
+        _shell_ctx: &mut Shell,
         args: CommandArgs,
         _stdin: Box<dyn Read>,
         _stdout: Box<dyn Write>,

@@ -4,6 +4,7 @@ use std::process::exit;
 
 use crate::args::CommandArgs;
 use crate::commands::*;
+use crate::shell::Shell;
 
 pub struct Exit;
 
@@ -16,6 +17,7 @@ impl Exit {
 impl Builtin for Exit {
     fn eval(
         &self,
+        _shell_ctx: &mut Shell,
         args: CommandArgs,
         _stdin: Box<dyn Read>,
         _stdout: Box<dyn Write>,

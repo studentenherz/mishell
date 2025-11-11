@@ -1,6 +1,7 @@
 use crate::args::CommandArgs;
 use crate::commands::*;
 use crate::locate::{locate, LocatedCommand};
+use crate::shell::Shell;
 
 pub struct Type;
 
@@ -13,6 +14,7 @@ impl Type {
 impl Builtin for Type {
     fn eval(
         &self,
+        _shell_ctx: &mut Shell,
         args: CommandArgs,
         _stdin: Box<dyn Read>,
         mut stdout: Box<dyn Write>,

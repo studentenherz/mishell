@@ -4,7 +4,7 @@ use std::process::{self, ChildStdout, Stdio};
 
 use crate::args::{Args, StdioConfig};
 use crate::locate::{locate, LocatedCommand};
-use crate::shell::ShellError;
+use crate::shell::{Shell, ShellError};
 
 enum Stdin {
     File(File),
@@ -127,7 +127,7 @@ impl PrevPipedStdout {
     }
 }
 
-pub fn eval(args: Args) -> Result<(), ShellError> {
+pub fn eval(shell_ctx: &mut Shell, args: Args) -> Result<(), ShellError> {
     let mut prev_stdout = PrevPipedStdout::None;
     let mut handles = vec![];
 
@@ -153,6 +153,7 @@ pub fn eval(args: Args) -> Result<(), ShellError> {
                 match curr_stdout {
                     Stdout::PipedBuiltin((pipe_reader, pipe_writer)) => {
                         cmd.eval(
+                            shell_ctx,
                             command_args,
                             this_stdin,
                             Box::new(pipe_writer),
@@ -163,6 +164,7 @@ pub fn eval(args: Args) -> Result<(), ShellError> {
                     }
                     _ => {
                         cmd.eval(
+                            shell_ctx,
                             command_args,
                             this_stdin,
                             curr_stdout.unwrap(),

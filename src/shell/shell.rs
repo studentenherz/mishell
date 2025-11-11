@@ -14,7 +14,7 @@ use crate::eval::eval;
 use crate::trie::Trie;
 use crate::{args::Args, locate::get_executables_names};
 
-struct ShellHelper {
+pub struct ShellHelper {
     commands: Trie,
 }
 
@@ -70,7 +70,7 @@ impl Validator for ShellHelper {}
 impl Helper for ShellHelper {}
 
 pub struct Shell {
-    rl: Editor<ShellHelper, FileHistory>,
+    pub rl: Editor<ShellHelper, FileHistory>,
 }
 
 impl Shell {
@@ -78,6 +78,8 @@ impl Shell {
         let config = Config::builder()
             .completion_type(CompletionType::List)
             .completion_prompt_limit(50)
+            .history_ignore_dups(false)
+            .unwrap()
             .build();
 
         let mut rl = Editor::with_config(config).unwrap();
@@ -97,11 +99,11 @@ impl Shell {
                         continue;
                     }
 
-                    let _ = &self.rl.add_history_entry(line_trimmed).unwrap();
+                    let _ = self.rl.add_history_entry(line_trimmed);
 
                     let args = Args::new(&line);
 
-                    if let Err(err) = eval(args) {
+                    if let Err(err) = eval(self, args) {
                         eprintln!("mishell: {}", err.message);
                     }
                 }

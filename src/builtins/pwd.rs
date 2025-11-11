@@ -2,6 +2,7 @@ use std::env;
 
 use crate::args::CommandArgs;
 use crate::commands::*;
+use crate::shell::Shell;
 
 pub struct Pwd;
 
@@ -14,6 +15,7 @@ impl Pwd {
 impl Builtin for Pwd {
     fn eval(
         &self,
+        _shell_ctx: &mut Shell,
         _args: CommandArgs,
         _stdin: Box<dyn Read>,
         mut stdout: Box<dyn Write>,
