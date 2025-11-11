@@ -1,4 +1,5 @@
 use std::io::{Read, Write};
+use std::usize;
 
 use rustyline::history::History as HistoryTrait;
 
@@ -14,6 +15,82 @@ impl History {
     }
 }
 
+#[derive(Default)]
+struct Args {
+    pub limit: Option<usize>,
+    pub read: Option<String>,
+    pub write: Option<String>,
+    pub append: Option<String>,
+}
+
+struct ParseError {
+    pub message: String,
+}
+
+impl ParseError {
+    fn new(message: &str) -> Self {
+        Self {
+            message: message.to_string(),
+        }
+    }
+}
+
+impl Args {
+    fn parse(args: CommandArgs) -> Result<Self, ParseError> {
+        let mut parsed = Self::default();
+        let mut iter = args.args.iter().skip(1);
+        let mut positional_index = 0usize;
+
+        while let Some(arg) = iter.next() {
+            match arg.as_str() {
+                "-r" => {
+                    if let Some(path) = iter.next() {
+                        parsed.read = Some(path.clone());
+                        continue;
+                    }
+
+                    return Err(ParseError::new("Expected file name"));
+                }
+                "-w" => {
+                    if let Some(path) = iter.next() {
+                        parsed.write = Some(path.clone());
+                        continue;
+                    }
+
+                    return Err(ParseError::new("Expected file name"));
+                }
+                "-a" => {
+                    if let Some(path) = iter.next() {
+                        parsed.append = Some(path.clone());
+                        continue;
+                    }
+
+                    return Err(ParseError::new("Expected file name"));
+                }
+                _ => {
+                    positional_index += 1;
+                    match positional_index {
+                        1 => match &str::parse::<usize>(arg) {
+                            Ok(limit) => {
+                                parsed.limit = Some(*limit);
+                            }
+                            Err(_) => {
+                                return Err(ParseError::new("numeric argument required"));
+                            }
+                        },
+                        _ => {
+                            // Should I return an error here to say more arguments than expected
+                            // were found?
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(parsed)
+    }
+}
+
 impl Builtin for History {
     fn eval(
         &self,
@@ -23,16 +100,13 @@ impl Builtin for History {
         mut stdout: Box<dyn Write>,
         mut stderr: Box<dyn Write>,
     ) -> CommandReturnType {
-        let limit: Option<usize> = match args.args.iter().nth(1) {
-            Some(val) => match val.as_str().parse() {
-                Ok(value) => Some(value),
-                Err(_) => {
-                    let _ = stderr.write_all(b"history: numeric argument required\n");
-                    let _ = stderr.flush();
-                    return CommandReturnType {};
-                }
-            },
-            None => None,
+        let Args { limit, .. } = match Args::parse(args) {
+            Ok(parsed) => parsed,
+            Err(err) => {
+                let _ = stderr.write_all(format!("history: {}\n", err.message).as_bytes());
+                let _ = stderr.flush();
+                return CommandReturnType {};
+            }
         };
 
         let skip = if let Some(limit) = limit {
