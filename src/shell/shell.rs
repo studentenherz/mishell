@@ -3,13 +3,16 @@ use rustyline::{
     error::ReadlineError,
     highlight::Highlighter,
     hint::Hinter,
-    history::FileHistory,
+    history::{FileHistory, History},
     validate::Validator,
     CompletionType, Config, Context, Editor, Helper, Result,
 };
-use std::{io, process::exit};
+use std::{
+    io::{self, Write},
+    process::exit,
+};
 
-use crate::builtins::{self, BUILTIN_COMANDS};
+use crate::builtins::BUILTIN_COMANDS;
 use crate::eval::eval;
 use crate::trie::Trie;
 use crate::{args::Args, locate::get_executables_names};
@@ -72,6 +75,7 @@ impl Helper for ShellHelper {}
 pub struct Shell {
     pub rl: Editor<ShellHelper, FileHistory>,
     histfile: Option<String>,
+    appended_count: usize,
 }
 
 impl Shell {
@@ -94,7 +98,11 @@ impl Shell {
             _ => None,
         };
 
-        Self { rl, histfile }
+        Self {
+            rl,
+            histfile,
+            appended_count: 0,
+        }
     }
 
     pub fn run(&mut self) -> io::Result<()> {
@@ -133,9 +141,40 @@ impl Shell {
         Ok(())
     }
 
+    fn _save_history<'a>(
+        path: &str,
+        history: impl Iterator<Item = &'a String>,
+        append: bool,
+    ) -> io::Result<()> {
+        let mut file = std::fs::OpenOptions::new()
+            .append(append)
+            .truncate(!append)
+            .write(true)
+            .create(true)
+            .open(path)?;
+
+        for line in history {
+            file.write_all(format!("{}\n", line).as_bytes())?;
+        }
+        file.flush()?;
+
+        Ok(())
+    }
+
+    pub fn save(&mut self, path: &str) -> io::Result<()> {
+        let history = self.rl.history().iter();
+        Self::_save_history(path, history, false)
+    }
+
+    pub fn append(&mut self, path: &str) -> io::Result<()> {
+        let history = self.rl.history().iter().skip(self.appended_count);
+        self.appended_count = self.rl.history().len();
+        Self::_save_history(path, history, true)
+    }
+
     pub fn exit(&mut self, status: i32) {
         if let Some(path) = self.histfile.clone() {
-            let _ = builtins::history::History::append(self, &path);
+            let _ = self.append(&path);
         }
 
         exit(status)

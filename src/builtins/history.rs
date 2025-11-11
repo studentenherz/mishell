@@ -1,4 +1,4 @@
-use std::io::{self, Read, Write};
+use std::io::{Read, Write};
 use std::usize;
 
 use rustyline::history::History as HistoryTrait;
@@ -12,36 +12,6 @@ pub struct History;
 impl History {
     pub fn new() -> Self {
         Self {}
-    }
-
-    fn _save_history<'a>(
-        path: &str,
-        history: impl Iterator<Item = &'a String>,
-        append: bool,
-    ) -> io::Result<()> {
-        let mut file = std::fs::OpenOptions::new()
-            .append(append)
-            .truncate(!append)
-            .write(true)
-            .create(true)
-            .open(path)?;
-
-        for line in history {
-            file.write_all(format!("{}\n", line).as_bytes())?;
-        }
-        file.flush()?;
-
-        Ok(())
-    }
-
-    pub fn save(shell_ctx: &mut Shell, path: &str) -> io::Result<()> {
-        let history = shell_ctx.rl.history().iter();
-        Self::_save_history(path, history, false)
-    }
-
-    pub fn append(shell_ctx: &mut Shell, path: &str) -> io::Result<()> {
-        let history = shell_ctx.rl.history().iter();
-        Self::_save_history(path, history, true)
     }
 }
 
@@ -153,7 +123,7 @@ impl Builtin for History {
         }
 
         if let Some(path) = write {
-            if let Err(err) = Self::save(shell_ctx, &path) {
+            if let Err(err) = shell_ctx.save(&path) {
                 let _ = stderr.write_all(format!("history: {}\n", err).as_bytes());
                 let _ = stderr.flush();
             }
@@ -161,7 +131,7 @@ impl Builtin for History {
         }
 
         if let Some(path) = append {
-            if let Err(err) = Self::append(shell_ctx, &path) {
+            if let Err(err) = shell_ctx.append(&path) {
                 let _ = stderr.write_all(format!("history: {}\n", err).as_bytes());
                 let _ = stderr.flush();
             }
