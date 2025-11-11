@@ -99,9 +99,9 @@ impl Shell {
         };
 
         Self {
+            appended_count: rl.history().len(),
             rl,
             histfile,
-            appended_count: 0,
         }
     }
 
