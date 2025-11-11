@@ -3,7 +3,7 @@ use crate::commands::Builtin;
 mod cd;
 mod echo;
 mod exit;
-mod history;
+pub mod history;
 mod pwd;
 mod type_;
 

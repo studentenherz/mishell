@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::usize;
 
 use rustyline::history::History as HistoryTrait;
@@ -12,6 +12,38 @@ pub struct History;
 impl History {
     pub fn new() -> Self {
         Self {}
+    }
+
+    fn _save_history<'a>(
+        path: &str,
+        history: impl Iterator<Item = &'a String>,
+        append: bool,
+    ) -> io::Result<()> {
+        let mut file = std::fs::OpenOptions::new()
+            .append(append)
+            .truncate(!append)
+            .write(true)
+            .create(true)
+            .open(path)?;
+
+        for line in history {
+            file.write_all(format!("{}\n", line).as_bytes())?;
+        }
+
+        file.write_all(b"\n")?;
+        file.flush()?;
+
+        Ok(())
+    }
+
+    pub fn save(shell_ctx: &mut Shell, path: &str) -> io::Result<()> {
+        let history = shell_ctx.rl.history().iter();
+        Self::_save_history(path, history, false)
+    }
+
+    pub fn append(shell_ctx: &mut Shell, path: &str) -> io::Result<()> {
+        let history = shell_ctx.rl.history().iter();
+        Self::_save_history(path, history, true)
     }
 }
 
@@ -100,7 +132,12 @@ impl Builtin for History {
         mut stdout: Box<dyn Write>,
         mut stderr: Box<dyn Write>,
     ) -> CommandReturnType {
-        let Args { limit, .. } = match Args::parse(args) {
+        let Args {
+            limit,
+            read,
+            write,
+            append,
+        } = match Args::parse(args) {
             Ok(parsed) => parsed,
             Err(err) => {
                 let _ = stderr.write_all(format!("history: {}\n", err.message).as_bytes());
@@ -108,6 +145,30 @@ impl Builtin for History {
                 return CommandReturnType {};
             }
         };
+
+        if let Some(path) = read {
+            if let Err(err) = shell_ctx.rl.load_history(&path) {
+                let _ = stderr.write_all(format!("history: {}\n", err).as_bytes());
+                let _ = stderr.flush();
+            }
+            return CommandReturnType {};
+        }
+
+        if let Some(path) = write {
+            if let Err(err) = Self::save(shell_ctx, &path) {
+                let _ = stderr.write_all(format!("history: {}\n", err).as_bytes());
+                let _ = stderr.flush();
+            }
+            return CommandReturnType {};
+        }
+
+        if let Some(path) = append {
+            if let Err(err) = Self::append(shell_ctx, &path) {
+                let _ = stderr.write_all(format!("history: {}\n", err).as_bytes());
+                let _ = stderr.flush();
+            }
+            return CommandReturnType {};
+        }
 
         let skip = if let Some(limit) = limit {
             usize::saturating_sub(shell_ctx.rl.history().len(), limit)

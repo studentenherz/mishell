@@ -7,9 +7,9 @@ use rustyline::{
     validate::Validator,
     CompletionType, Config, Context, Editor, Helper, Result,
 };
-use std::io;
+use std::{io, process::exit};
 
-use crate::builtins::BUILTIN_COMANDS;
+use crate::builtins::{self, BUILTIN_COMANDS};
 use crate::eval::eval;
 use crate::trie::Trie;
 use crate::{args::Args, locate::get_executables_names};
@@ -71,6 +71,7 @@ impl Helper for ShellHelper {}
 
 pub struct Shell {
     pub rl: Editor<ShellHelper, FileHistory>,
+    histfile: Option<String>,
 }
 
 impl Shell {
@@ -85,7 +86,15 @@ impl Shell {
         let mut rl = Editor::with_config(config).unwrap();
         rl.set_helper(Some(ShellHelper::new()));
 
-        Self { rl }
+        let histfile = match std::env::var("HISTFILE") {
+            Ok(path) => {
+                let _ = rl.load_history(&path);
+                Some(path)
+            }
+            _ => None,
+        };
+
+        Self { rl, histfile }
     }
 
     pub fn run(&mut self) -> io::Result<()> {
@@ -120,6 +129,15 @@ impl Shell {
             }
         }
 
+        self.exit(0);
         Ok(())
+    }
+
+    pub fn exit(&mut self, status: i32) {
+        if let Some(path) = self.histfile.clone() {
+            let _ = builtins::history::History::append(self, &path);
+        }
+
+        exit(status)
     }
 }
